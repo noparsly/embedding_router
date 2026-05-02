@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+numpy
+scikit-learn
+jieba
+requests
+openai
+python-multipart
+PyYAML

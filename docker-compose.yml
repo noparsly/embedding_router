@@ -1,0 +1,39 @@
+services:
+  admin:
+    build: .
+    image: simplified-embedding-router:latest
+    container_name: intent-router-admin
+    command: python3 -m uvicorn admin_server:app --host 0.0.0.0 --port 8001
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /app/data
+      INTENT_CACHE_DIR: /app/data/intents
+      EMBEDDING_PROVIDER: tencent
+      ROUTER_SERVICE_URL: http://router:8000
+      AUTO_PUBLISH_TO_ROUTER: "true"
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8001:8001"
+    depends_on:
+      - router
+    restart: unless-stopped
+
+  router:
+    image: simplified-embedding-router:latest
+    container_name: intent-router-online
+    command: python3 -m uvicorn server_tencent:app --host 0.0.0.0 --port 8000
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /app/data
+      INTENT_CACHE_DIR: /app/data/intents
+      EMBEDDING_PROVIDER: tencent
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

@@ -1,0 +1,15 @@
+.DS_Store
+.git
+.venv
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Runtime state and local artifacts are mounted at runtime when needed.
+data/
+config/
+node_modules/
+IntentRecognition_old/
+*.tar
+*.docx

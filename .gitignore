@@ -1,0 +1,32 @@
+# OS / editor
+.DS_Store
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Node / generated helper deps
+node_modules/
+npm-debug.log*
+
+# Runtime state and secrets
+.env
+.env.*
+!.env.example
+config/*.local.yaml
+config/config.local.yaml
+data/
+
+# Build/export artifacts
+*.tar
+*.tar.gz
+*.zip
+*.docx
+
+# Legacy local artifacts
+embedding-router-huggingface.tar
+embedding-router-tencent_v1.tar
