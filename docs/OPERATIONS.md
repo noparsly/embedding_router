@@ -30,6 +30,31 @@ cd ~/intent-router
 
 不要再用旧的 `simplified_embedding_router` 做日常开发，那个目录保留为历史参考即可。
 
+## 代码一致性原则
+
+GitHub 是代码和文档的主线来源，Mac 本地负责开发和提交，Lighthouse 服务器负责运行。
+
+应提交 GitHub：
+
+- 应用源码，例如 `admin_server.py`、`server_tencent.py`、`intent_router/`
+- Docker 和依赖模板，例如 `Dockerfile`、`docker-compose.yml`、`requirements*.txt`
+- 运维和接入文档，例如 `README.md`、`docs/`
+
+不应提交 GitHub：
+
+- `.env` 和任何云厂商密钥、模型 API Key
+- `data/` 运行态数据，包括意图树、发布记录、评测记录和缓存
+- 服务器临时备份文件，例如 `*.bak.*`
+- 只属于另一套服务的部署文件，除非明确迁移到本仓库管理
+
+如果在 Lighthouse 上做了紧急热修，必须尽快回流：
+
+```text
+服务器临时修复 -> 本地同步同等代码 -> 本地测试 -> commit -> push GitHub -> 后续服务器用 git pull 更新
+```
+
+服务器上如存在本机专用改动（例如生产专用 `docker-compose.yml`），不要直接 `git reset --hard` 或覆盖；先确认这些差异是否应该产品化进入 GitHub，还是继续作为服务器本地配置保留。
+
 ## 日常开发流程
 
 1. 在 Mac 本地拉取最新代码：
