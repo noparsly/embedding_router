@@ -394,7 +394,7 @@ MCP_SERVER_NAME = get_str("MCP_SERVER_NAME", "embedding-intent-router-tencent")
 MCP_SERVER_VERSION = get_str("MCP_SERVER_VERSION", "0.1")
 MCP_PLUGIN_NAME = get_str("MCP_PLUGIN_NAME", "intent_router")
 _origin_env = get_list("MCP_ALLOWED_ORIGINS", [])
-MCP_ALLOWED_ORIGINS = _origin_env or ["http://localhost", "http://127.0.0.1"]
+MCP_ALLOWED_ORIGINS = _origin_env
 _mcp_sessions: Dict[str, Dict[str, str]] = {}
 
 
@@ -416,12 +416,11 @@ def _tool_definitions():
     return [
         {
             "name": "route_intent",
-            "title": "Route User Query To Intent",
             "description": "Route a user query to the best intent using the published app runtime.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "app_id": {"type": "string", "description": "Published application id"},
+                    "app_id": {"type": "string", "description": "Published application id", "default": "bond_qa"},
                     "environment": {"type": "string", "description": "Environment, default prod", "default": "prod"},
                     "query": {"type": "string", "description": "User query"},
                     "visible_intent_ids": {
@@ -430,34 +429,7 @@ def _tool_definitions():
                         "description": "Optional allowlist of intent ids",
                     },
                 },
-                "required": ["query", "app_id"],
-            },
-            "outputSchema": {
-                "type": "object",
-                "properties": {
-                    "selected_intent_id": {"type": "string"},
-                    "selected_intent_name": {"type": "string"},
-                    "method": {"type": "string"},
-                    "confidence": {"type": "number"},
-                    "top_k": {
-                        "type": "array",
-                        "items": {
-                            "type": "array",
-                            "items": [{"type": "string"}, {"type": "string"}, {"type": "number"}],
-                        },
-                    },
-                    "is_ood": {"type": "boolean"},
-                    "is_ambiguous": {"type": "boolean"},
-                },
-                "required": [
-                    "selected_intent_id",
-                    "selected_intent_name",
-                    "method",
-                    "confidence",
-                    "top_k",
-                    "is_ood",
-                    "is_ambiguous",
-                ],
+                "required": ["query"],
             },
         }
     ]
@@ -466,7 +438,7 @@ def _tool_definitions():
 def _check_origin(req: Request) -> Optional[Response]:
     """校验跨域来源，未通过时返回 403 响应。"""
     origin = req.headers.get("origin")
-    if origin and MCP_ALLOWED_ORIGINS and origin not in MCP_ALLOWED_ORIGINS:
+    if origin and MCP_ALLOWED_ORIGINS and "*" not in MCP_ALLOWED_ORIGINS and origin not in MCP_ALLOWED_ORIGINS:
         return Response(status_code=403)
     return None
 
@@ -546,7 +518,7 @@ async def _dispatch_mcp(body: dict, req: Request) -> Response:
         if name != "route_intent":
             return _json_response(_rpc_error(req_id, -32601, f"Unknown tool: {name}"), status_code=404)
 
-        app_id = (arguments or {}).get("app_id")
+        app_id = (arguments or {}).get("app_id") or "bond_qa"
         environment = (arguments or {}).get("environment") or "prod"
         query = (arguments or {}).get("query")
         visible = (arguments or {}).get("visible_intent_ids")
@@ -641,6 +613,18 @@ async def mcp_plugin_sse(plugin_name: str):
     endpoint = f"/mcp/{plugin_name}/message?sessionId={session_id}"
     _mcp_sessions[session_id] = {"plugin_name": plugin_name}
     return StreamingResponse(_sse_event_stream(endpoint), media_type="text/event-stream", headers=_sse_headers())
+
+
+@app.post("/mcp/sse")
+async def mcp_sse_post(req: Request):
+    """兼容将 SSE 地址当作 Streamable HTTP 地址提交的 MCP 客户端。"""
+    return await mcp_post(req)
+
+
+@app.post("/mcp/{plugin_name}/sse")
+async def mcp_plugin_sse_post(plugin_name: str, req: Request):
+    """兼容将插件式 SSE 地址当作消息提交地址的 MCP 客户端。"""
+    return await mcp_plugin_message(plugin_name, req)
 
 
 @app.post("/mcp")

@@ -12,6 +12,8 @@ Lighthouse 服务器  运行 Docker 服务，保存生产 data/ 和 .env
 在线服务           对外提供 /v1/route 和 /mcp
 ```
 
+腾讯智能体开发平台 MCP 接入和排障记录见：[腾讯智能体 MCP 接入说明](TENCENT_AGENT_MCP.md)。
+
 ## 目录约定
 
 Mac 本地开发目录：
